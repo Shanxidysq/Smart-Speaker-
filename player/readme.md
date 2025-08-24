@@ -41,3 +41,12 @@ c语言编程方式
 c语言编程方式无疑就是通过文件方式来访问了，通过打开led设备对应的描述文件，通过向文件里面输入不同的内容就可以控制硬件行为
 c语言编程方式可见详细源文件
 至此控制led已经完成了
+
+
+## 音频验证
+
+本章内容参考《正点原子imx6ull Linuxc应用编程》
+这里是整个项目里面最重要的一点，音频验证涉及到整个项目的逻辑
+音频这里就介绍如何录音播放等操作
+[参考博客](https://blog.csdn.net/Xinbaibaiya12138/article/details/149325472?spm=1001.2101.3001.6650.2&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EYuanLiJiHua%7EPosition-2-149325472-blog-133771032.235%5Ev43%5Epc_blog_bottom_relevance_base7&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EYuanLiJiHua%7EPosition-2-149325472-blog-133771032.235%5Ev43%5Epc_blog_bottom_relevance_base7&utm_relevant_index=5)
+
