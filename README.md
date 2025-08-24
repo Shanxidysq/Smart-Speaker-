@@ -93,3 +93,16 @@ arm-linux-gnueabihf-gcc -v
 
 至此我们在开发中需要的大部分软件已经安装完成了，后续要需要安装SecureCRT或者putty等软件我也就不在此赘述了大家可以参考其它魔法教程来操作
 
+
+## 项目构建工具
+
+对于脱离的集成式的IED之后项目构建成为了一个让人很头疼的问题，这里主要采用makefile作为项目构建工具当然了，如果大家会Cmake一样的
+然后就是项目编译完毕了怎么移植到开发板呢可以只用scp命令
+scp命令示例
+```c
+scp local_file.txt username@remote_host:/remote/directory/
+
+例如
+scp led username@ip:/root/work
+```
+
