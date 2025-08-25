@@ -50,3 +50,66 @@ c语言编程方式可见详细源文件
 音频这里就介绍如何录音播放等操作
 [参考博客](https://blog.csdn.net/Xinbaibaiya12138/article/details/149325472?spm=1001.2101.3001.6650.2&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EYuanLiJiHua%7EPosition-2-149325472-blog-133771032.235%5Ev43%5Epc_blog_bottom_relevance_base7&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EYuanLiJiHua%7EPosition-2-149325472-blog-133771032.235%5Ev43%5Epc_blog_bottom_relevance_base7&utm_relevant_index=5)
 
+### ALSA框架概述
+
+ALSA框架是linux下面的高级音频开发子系统，也可以称作为框架。现在Linux系统下的主流音频开发框架就是`ALSA`，ALSA替代了`OSS开发声音系统`，从概述来看ALSA框架我们可以分为三层，从底层到内核空间再到应用空间，分别对应不同的学习体系，例如硬件下需要去学习驱动等，在应用层的话需要熟练使用`alsa-lib`提供的库函数，作为我们编程的基础
+
+![image-20250825230326866](C:\Users\欧鑫\AppData\Roaming\Typora\typora-user-images\image-20250825230326866.png)
+
+在Linux庞大的体系中，除了针对音频开发的`ALSA`框架还需要学习其它框架，例如视频框架`V4L2`和	`ffmpeg`以及音频框架下的`Pipewire`，学习Linux开发，体系过于庞大，需要我们去学习的东西还有很多
+
+
+
+### alsa-lib介绍
+
+在我们学习应用层编程最绕不开的就是怎么调用库函数`API`...当然`alsa-lib`就是`ALSA`框架提供的一组编程接口，学习编程接口不需要我们过多的去硬背API的个个参数，理解性学习即可，更多还是要我们去学习框架的概念，架构，培养我们的学习方式
+
+`alsa-lib`是linux提供的一组应用层的c库函数，为音频应用开发提供了一套标准的接口，应用层无需关注底层驱动等实现，只需要我们通过库函数即可实现对硬件设备声卡的驱动实现播放录音等操作
+
+[alsa-lib官方文档地址](https://www.alsa-project.org/alsa-doc/alsa-lib/)
+
+当然啦，如果英文过于晦涩难懂丢给AI也是一份不错的差事，让它生成对应的API参数说明和编程示例效率反而会更高
+
+
+
+
+
+### sound设备结点
+
+在 `Linux` 内核设备驱动层、基于 `ALSA `音频驱动框架注册的 `sound `设备会在`/dev/snd `目录下生成相应的 设备节点文件，cd到linux的dev目录下，ls即可看到sound对应的设备文件，同理在我们的硬件平台`imx6ull`的shell下也可以查询到对应的设备结点文件
+
+在设备文件夹里面主要由如下内容：
+
+- controlC0**：**用于声卡控制的设备节点，譬如通道选择、混音器、麦克风的控制等，C0 表示声卡 0 （card0）；  
+- pcmC0D0c**：**用于录音的 PCM 设备节点。其中 C0 表示 card0，也就是声卡 0；而 D0 表示 device  0，也就是设备 0；最后一个字母 c 是 capture 的缩写，表示录音；所以 pcmC0D0c 便是系统的声卡 0 中的录音设备 0；  
+- pcmC0D0p**：**用于播放（或叫放音、回放）的 PCM 设备节点。其中 C0 表示 card0，也就是声卡 0； 而 D0 表示 device 0，也就是设备 0；最后一个字母 p 是 playback 的缩写，表示播放；所以 pcmC0D0p 便是系统的声卡 0 中的播放设备 0；  
+- pcmC0D1c**：**用于录音的 PCM 设备节点。对应系统的声卡 0 中的录音设备 1； 
+- pcmC0D1p**：**用于播放的 PCM 设备节点。对应系统的声卡 0 中的播放设备 1；
+- timer**：**定时器
+
+其中在我的ubuntu下面特有一个seq文件，seq是ALSA的序列器，可以为应用程序之间提供基于时间和序列的高精度MIDI（Musical Instrument Digital Interface - 音乐设备数字接口）保证数据和事件的路由与调度
+
+我们操作Linux下面的任何硬件设备都是通过操作文件的方式来控制（因为在Linux系统下一切设备皆为文件的概念），所以在应用层抽象成文件io的方式来操作设备结点里面的文件让我们无需去关注底层的驱动实现即可操作硬件
+
+在linux系统下的`/proc/asound`目录下面，存在很多文件，它们描述了系统的声卡等信息
+
+​	**cards**文件
+
+cards文件里面描述了系统中可用的、注册的声卡
+
+
+
+​	**devices**文件
+
+devices文件描述了系统中所有声卡注册的设备，包括 control、pcm、timer、seq 等等
+
+
+
+​	**PCM**
+
+pcm文件描述了系统可用的pcm设备
+
+```
+在linux系统下面可以使用cat来查看这些设备信息
+```
+
