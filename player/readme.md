@@ -223,9 +223,182 @@ hello吖，在这里我们就要基于`ALSA`音频开发框架去进行应用编
 
 
 
+### 音频编程实战
+
+这里就会进行示例编程了，利用`alsa-lib`提供的库，进行音频应用编程，可以制作简单的音频播放器。在我们的项目中，实现最简单的音频播放就可以了这个是最简单的交互逻辑了，当然一个项目应该具有更加完善完美的逻辑了，这里我们也只是将核心功能最小化，后面我们可以根据自己对项目的理解扩充其它更加广阔的内容和知识
 
 
 
+hello吖，现在开始需要我们使用`alsalib`来控制播放音频等操作了，在linux上一切皆文件，所以对于linux的io操作，io复用，select，poll，epoll，以及多线程多进程都是需要很好的理解的
+
+下面对一些常见的API进行简单的使用示例
+
+
+
+#### **1.打开PCM设备**
+
+```c
+int snd_pcm_open(snd_pcm_t **pcmp, const char *name, snd_pcm_stream_t stream, int mode) ;
+```
+
+- pcmp**：**snd_pcm_t 用于描述一个 PCM 设备，所以一个 snd_pcm_t 对象表示一个 PCM 设备； snd_pcm_open 函数会打开参数 name 所指定的设备，实例化 snd_pcm_t 对象，并将对象的指针（也 就是 PCM 设备的句柄）通过 pcmp 返回出来。  
+- name**：**参数 name 指定 PCM 设备的名字。alsa-lib 库函数中使用逻辑设备名而不是设备文件名，命 名方式为"hw:i,j"，i 表示声卡的卡号，j 则表示这块声卡上的设备号；譬如"hw:0,0"表示声卡 0 上的 PCM 设备 0，在播放情况下，这其实就对应/dev/snd/pcmC0D0p（如果是录音，则对应 /dev/snd/pcmC0D0c）。除了使用"hw:i,j"这种方式命名之外，还有其它两种常用的命名方式，譬如 "plughw:i,j"、"default"等，关于这些名字的不同，本章最后再向大家进行简单地介绍，这里暂时先 不去理会这个问题。 
+-  stream**：**参数 stream 指定流类型，有两种不同类型：SND_PCM_STREAM_PLAYBACK 和 SND_PCM_STREAM_CAPTURE ； SND_PCM_STREAM_PLAYBACK 表 示 播 放 ， SND_PCM_STREAM_CAPTURE 则表示采集。 
+-  mode**：**最后一个参数 mode 指定了 open 模式，通常情况下，我们会将其设置为 0，表示默认打开 模式，默认情况下使用阻塞方式打开设备；当然，也可将其设置为 SND_PCM_NONBLOCK，表示 以非阻塞方式打开设备。
+
+```c
+int snd_pcm_close(snd_pcm_t);// 与之对应的就是关闭操作
+```
+
+
+
+设备打开成功返回0，失败返回一个小于0的错误编号
+
+
+
+**编程示例**
+
+```c
+struct snd_pcm_t *pcm_handle =NULL;//定义一个snd_pcm_t类型指针，等待open函数成功的话就可以使用指针操作设备
+int ret; 
+ 
+ret = snd_pcm_open(&pcm_handle, "hw:0,0", SND_PCM_STREAM_PLAYBACK, 0); 
+if (0 > ret) { 
+ fprintf(stderr, "snd_pcm_open error: %s\n", snd_strerror(ret)); 
+ return -1; 
+}
+```
+
+
+
+#### 2.设置参数
+
+我们打开了设备之后，设备还是无法正常工作的，我们需要对齐进行参数配置，主要是对硬件参数进行配置，譬如**采样率**、**声道数**、格式、**访问类型**、**period 周期大小**、**buffer 大小**等。 
+
+采样率：一秒内样本采样多少次 比如44.1KHZ （一秒内采样 44.1k次），这样采集下来的大小称为一帧
+
+声道数：多声道还是单声道
+
+周期大小：就是一个周期内包含多少帧数据
+
+缓冲区（buff）大小：通常用周期大小作为基数
+
+周期数：缓冲区大小被划分为多少帧
+
+
+
+**实例化snd_pcm_params对象**
+
+在进行设置参数时，我们同样需要使用一个hw结构体指针来实例化一个对象
+
+```c
+// 这里可以从结构体名称很清楚的了解到这个结构体的作用
+snd_pcm_hw_params_t *hwparams = NULL; 
+ 
+snd_pcm_hw_params_malloc(&hwparams); 
+//这里两种写法都可以，具体的话malloc和alloc可以去了解一下Linux系统的内存管理会有一个初步了解
+snd_pcm_hw_params_alloca(&hwparams); 
+```
+
+
+
+**释放snd_pcm_params对象**
+
+```c
+void snd_pcm_hw_params_free(snd_pcm_hw_params_t *obj) ;
+```
+
+
+
+**设置PCM参数**
+
+上面的操作无异于就是我们对一个`snd_pcm_hw_params_t` 对象进行了一个实例化，需要设置参数进去
+
+```c
+// 设置参数进去 
+void snd_pcm_hw_params_any(pcm_handle,hwparams);
+snd_pcm_hw_params_any(pcm_handle, hwparams); 
+```
+
+这是一个统一接口，alsa-lib还提供了其它单一参数设置接口
+
+```c
+snd_pcm_hw_params_set_xxx //这是对应的函数 _xxx就是我们需要设置的参数
+```
+
+例如我们设置access访问类型参数，其它的参数同样的都是见名知意
+
+```c
+snd_pcm_hw_params_set_access() 
+```
+
+剩下对应的接口无疑就是对`snd_pcm_hw_params_t`结构体里面的参数进行了一个单独设置获取的操作
+
+
+
+#### 3.读写数据
+
+在这里了，我们前面做了什么？分别是打开设备，设置参数，参数设置完毕之后就是我们操作PCM设备了，我们向PCM设备写数据就是驱动它播放音乐，读数据就是驱动采集
+
+这里呢，就对两个操作进行了单独的封装，函数原型如下
+
+```c
+// snd_pcm_sframes_t 
+// pcm 对应的描述设备
+// buffer 应用程序的缓冲区就是和pcm设备的数据交互缓冲区
+// size 指定写入数据大小，帧为单位
+snd_pcm_sframes_t snd_pcm_writei(snd_pcm_t *pcm, 
+ const void *buffer, 
+ snd_pcm_uframes_t size 
+) 
+ 
+snd_pcm_sframes_t snd_pcm_readi(snd_pcm_t *pcm, 
+ void *buffer, 
+ snd_pcm_uframes_t size 
+) 
+```
+
+
+
+**阻塞读写和非阻塞读写**
+
+当我们调用`snd_pcm_open`打开设备时，可以设置读写模式（阻塞、非阻塞）
+
+阻塞读写：当缓冲区里面数据满（空）的时候，调用读写函数时会阻塞，等待缓冲区有数据（可写）的时候在进行写入
+
+非阻塞读写：就是调用读写函数的时候，发生上面的场景会直接返回错误码退出而不阻塞
+
+
+
+#### 4.播放音频
+
+
+
+
+
+#### 5.录制音频
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### **内存管理经验**
+
+与之对应的就是内存空间的回收了，在我参加的项目当中，就是因为上一位程序员对内存管理的疏忽导致整个项目能跑起来但是非常”怪“，如果把指针置空我们可以进行`if(NULL != ptr) 或者 assert(ptr!=NULL) `等提前预防空指针的操作，但是野指针呢，如果你的指针乱指，整个程序就会造成莫名奇妙的情况，所以作为一名合格的c/c++、嵌入式程序员对内存的管理必须严谨。
+
+然而在内存管理方面C++又是比C语言更加方便的，因为C++语言的面向对象特性，我们不论是使用`RAII`机制，还是智能指针来管理对象，都可以对内存管理做一个很好的管理，对比于C语言我们的每个`malloc`都需要我们自己去`free`所以大家在c编程时一定要对内存敏感
 
 
 
