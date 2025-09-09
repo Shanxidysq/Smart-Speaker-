@@ -371,12 +371,15 @@ snd_pcm_sframes_t snd_pcm_readi(snd_pcm_t *pcm,
 
 
 #### 4.播放音频
-
-
+在自己的另一个仓库Linux-System中实现了ALSA的音频框架编程
+ALSA框架只支持PCM音频格式，wav就是44字节报头+PCM原生数据
+的格式，通过在wav报头里面拿到通道数和采样率即可实现播放操作
 
 
 
 #### 5.录制音频
+录制音频操作就是封装一个wav文件头，然后写入PCM原始数据即可，
+然后回填部分字段信息
 
 
 
