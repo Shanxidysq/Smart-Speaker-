@@ -1,5 +1,6 @@
 #include <iostream>
 #include <thread>
+#include <alsa/asoundlib.h>
 using namespace std;
 void Handler1()
 {
