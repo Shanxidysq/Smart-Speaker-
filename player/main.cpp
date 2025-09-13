@@ -12,6 +12,8 @@ using namespace std;
 // 定义全局变量模式管理类 
 // 模式管理内聚playback类 管理播放功能，内聚线程池避免多进程等无效浪费资源的逻辑
 // 后续需要增加socket通信类
+// 增加socket之后就需要epoll监听网络套接字的状态
+// 可以说mngr是两个线程 一个socket线程还是使用epoll来监听 这里使用epoll好一点吧
 ox::Mode_Mngr mngr;
 
 string name2("../music/jiaohuanyusheng.wav");

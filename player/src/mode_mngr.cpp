@@ -36,9 +36,6 @@ namespace ox
         ox::WAVHeader header;
         // 读取出帧头数据
         file.read((char *)&header, 44);
-        // 打开pcm设备 -播放模式
-        cout << header.sample_rate << endl;
-        cout << header.channels << endl;
         m_playback.m_channels     = header.channels;
         m_playback.m_sample_rate  = header.sample_rate;
 
@@ -64,7 +61,12 @@ namespace ox
             char buffer[1024] = {0};
             file.read(buffer, 1024);
             int len = 0;
-            m_playback.WriteFrame((const uint8_t *)buffer, 1024, &len);
+            bool ret = m_playback.WriteFrame((const uint8_t *)buffer, 1024, &len);
+            if(!ret)
+            {
+                cerr<<"音频数据写入存在问题"<<endl;
+                exit(1);
+            }
             if (file.eof())
             {
                 // wav文件读取完毕
@@ -87,7 +89,7 @@ namespace ox
                 // 根据cur_mode决定index怎么遍历
                 m_index = ++m_index % m_lists.size();
                 // 播放完毕一首音乐设备需要重新Prepare
-                m_playback.Prepare();
+                m_playback.Drain();
             }
         }
     }

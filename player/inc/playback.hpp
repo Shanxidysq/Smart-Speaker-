@@ -28,19 +28,22 @@ namespace ox
         // 获取采样格式
         snd_pcm_format_t GetFormat() const;
         // 设置采样格式
-        bool SetFormat(snd_pcm_format_t format);       
+        bool SetFormat(snd_pcm_format_t format);
         bool SetParams();
         bool Prepare();
+        // 重置硬件设备
+        void Drain();
     public:
         int m_sample_rate;
         int m_channels;
+
     private:
         // 设置参数
         size_t Downmix6to2(int16_t *buf, size_t bytes_in);
-        bool m_downmix = false;   // 是否需要软件降混
+        bool m_downmix = false; // 是否需要软件降混
 
         std::string m_device;
-        snd_pcm_t *m_pcm_handle;       // 修改为正确的类型
+        snd_pcm_t *m_pcm_handle;   // 修改为正确的类型
         snd_pcm_format_t m_format; // 添加格式成员变量
     };
 }

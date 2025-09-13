@@ -94,6 +94,12 @@ namespace ox
 
         // 写入音频帧
         int result = snd_pcm_writei(m_pcm_handle, buffer, max_frames);
+        if (result == -EPIPE)
+        { // underrun
+            std::cerr << "underrun, recovery\n";
+            snd_pcm_prepare(m_pcm_handle);
+            result = snd_pcm_writei(m_pcm_handle, buffer, max_frames); // 重试一次
+        }
 
         if (result < 0)
         {
@@ -309,10 +315,28 @@ namespace ox
     bool AlsaPlayback::Prepare()
     {
         int ret = snd_pcm_prepare(m_pcm_handle);
-        if(ret < 0)
+        if (ret < 0)
         {
             return false;
         }
         return true;
+    }
+
+    // 一首音乐播放完毕我们需要将硬件设备重置一下
+    void AlsaPlayback::Drain()
+    {
+        if (!m_pcm_handle)
+            return;
+        int err = snd_pcm_drain(m_pcm_handle); // ① 送完余样
+        if (err < 0)
+            std::cerr << "drain fail: " << snd_strerror(err) << '\n';
+
+        err = snd_pcm_drop(m_pcm_handle); // ② 强制停止
+        if (err < 0)
+            std::cerr << "drop fail: " << snd_strerror(err) << '\n';
+
+        err = snd_pcm_prepare(m_pcm_handle); // ③ 重新准备
+        if (err < 0)
+            std::cerr << "prepare fail: " << snd_strerror(err) << '\n';
     }
 }
