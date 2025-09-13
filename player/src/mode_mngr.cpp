@@ -1,0 +1,95 @@
+#include "mode_mngr.hpp"
+#include "playback.hpp"
+#include "wav.hpp"
+#include <string>
+#include <vector>
+#include <fstream>
+using namespace std;
+
+namespace ox
+{
+    const string Device_name("hw:0,0");
+    const int default_rate = 44100;
+    const int default_channle = 2;
+    Mode_Mngr::Mode_Mngr() : m_playback(Device_name, default_rate, default_channle)
+    {
+        // 模式设置
+        m_cur_mode  = SUSPEND;
+        m_index     = 0;
+        m_running   = false;
+        // 内部组件线程池，启动即开始就好了
+
+        // 打开设备
+        m_playback.Open();
+        // 构建Alsaplayback对象
+    }
+
+    Mode_Mngr::~Mode_Mngr()
+    {
+        m_playback.Close();
+    }
+
+    // 播放wav格式文件
+    void Mode_Mngr::_Play(const string &filename)
+    {
+        ifstream file(filename.c_str(), ios::binary);
+        ox::WAVHeader header;
+        // 读取出帧头数据
+        file.read((char *)&header, 44);
+        // 打开pcm设备 -播放模式
+        cout << header.sample_rate << endl;
+        cout << header.channels << endl;
+        m_playback.m_channels     = header.channels;
+        m_playback.m_sample_rate  = header.sample_rate;
+
+        // 这里根据wav头设置参数
+        m_playback.SetParams();
+
+        if (!file.is_open())
+        {
+            cerr << "文件：" << filename << "打开失败" << endl;
+            exit(-1);
+        }
+        // 先不检查wav文件帧头 直接读取pcm原始数据
+        // 后面这里存在检查wav格式文件头信息等 所以后面这里需要解析wav格式文件
+        file.seekg(44, ios::beg);
+        while (1)
+        {
+            // 播放的时候检测curmode
+            // 确保外部设置暂停后可以立即响应
+            if (mngr.m_cur_mode == ox::Mode_Mngr::SUSPEND)
+            {
+                break;
+            }
+            char buffer[1024] = {0};
+            file.read(buffer, 1024);
+            int len = 0;
+            m_playback.WriteFrame((const uint8_t *)buffer, 1024, &len);
+            if (file.eof())
+            {
+                // wav文件读取完毕
+                cout << "音乐播放完毕" << endl;
+                break;
+            }
+        }
+    }
+    // 播放线程接口
+    void Mode_Mngr::Play()
+    {
+        // 看系统是否处于运行态
+        while (m_running)
+        {
+            // 暂停播放
+            if (m_cur_mode != SUSPEND)
+            {
+                // 这里会确保一首音乐播放完毕
+                _Play(m_lists[m_index]);
+                // 根据cur_mode决定index怎么遍历
+                m_index = ++m_index % m_lists.size();
+                // 播放完毕一首音乐设备需要重新Prepare
+                m_playback.Prepare();
+            }
+        }
+    }
+
+}

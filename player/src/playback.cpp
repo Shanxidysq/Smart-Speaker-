@@ -12,7 +12,8 @@ namespace ox
     // 一个完整的播放器 自适应参数应该修改一下这一点
     //  名字空间域下搭建
     //  默认构造函数
-    AlsaPlayback::AlsaPlayback(const std::string device, int sample_rate, int channels)
+    AlsaPlayback::AlsaPlayback(const std::string device, const int sample_rate,
+                               const int channels)
         : m_device(device), m_sample_rate(sample_rate), m_channels(channels),
           m_pcm_handle(nullptr), m_format(SND_PCM_FORMAT_S16_LE)
     {
@@ -85,7 +86,7 @@ namespace ox
             stereo.resize(buffer_size);
             std::memcpy(stereo.data(), buffer, buffer_size);
             buffer_size = Downmix6to2(reinterpret_cast<int16_t *>(stereo.data()),
-                                   buffer_size);
+                                      buffer_size);
             buffer = stereo.data();
         }
         // 计算可以写入的最大帧数
@@ -157,6 +158,7 @@ namespace ox
     bool AlsaPlayback::SetParams()
     {
         snd_pcm_hw_params_t *params;
+        // alloca分配栈空间
         snd_pcm_hw_params_alloca(&params);
 
         /* 1. 初始化参数结构 */
@@ -185,7 +187,7 @@ namespace ox
         }
 
         /* 4. 通道数：先 6，不行就 2 */
-        err = snd_pcm_hw_params_set_channels(m_pcm_handle, params,m_channels);
+        err = snd_pcm_hw_params_set_channels(m_pcm_handle, params, m_channels);
         if (err == -EINVAL)
         { // 硬件不支持 6ch
             err = snd_pcm_hw_params_set_channels(m_pcm_handle, params, 2);
@@ -204,7 +206,7 @@ namespace ox
         }
         else
         { // 6ch 成功
-            m_channels = 6;
+            m_channels = m_channels;
             m_downmix = false;
         }
 
@@ -302,6 +304,15 @@ namespace ox
             return false;
         }
         m_format = format;
+        return true;
+    }
+    bool AlsaPlayback::Prepare()
+    {
+        int ret = snd_pcm_prepare(m_pcm_handle);
+        if(ret < 0)
+        {
+            return false;
+        }
         return true;
     }
 }
