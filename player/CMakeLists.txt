@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 set(TOOLCHAIN_DIR /usr/local/arm/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf)
 # 项目设置 指定语言cpp
 project(SampleProject)
-set(TARGET testplayer-mngr3)
+set(TARGET thread)
 
 # 制定编译出来的arm架构文件路径
 set(ALSA_ROOT ${TOOLCHAIN_DIR}/alsa-lib-1.2.7.1/_install)
@@ -18,6 +18,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 include_directories(${CMAKE_SOURCE_DIR}/inc)
 
 # 设置C++11标准
+# C++ 14兼容make_unique
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

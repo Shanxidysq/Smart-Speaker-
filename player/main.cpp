@@ -4,6 +4,7 @@
 #include <iostream>
 #include <thread>
 #include <fstream>
+#include <functional>
 #include <alsa/asoundlib.h>
 using namespace std;
 using namespace std;
@@ -14,7 +15,7 @@ using namespace std;
 // 后续需要增加socket通信类
 // 增加socket之后就需要epoll监听网络套接字的状态
 // 可以说mngr是两个线程 一个socket线程还是使用epoll来监听 这里使用epoll好一点吧
-ox::Mode_Mngr mngr;
+
 
 string name2("../music/jiaohuanyusheng.wav");
 string name1("../music/daoxiang.wav");
@@ -22,18 +23,20 @@ string name1("../music/daoxiang.wav");
 // main作为主程序接口 调用其它组件即可
 // 这里实现了播放逻辑
 
-
-
-
 int main(int argc, char *argv[])
 {
-    // 打开wav文件
-    mngr.m_running=true;
+    ox::Mode_Mngr mngr;
+    
     mngr.m_lists.push_back(name2);
     mngr.m_lists.push_back(name1);
-
     mngr.m_cur_mode = ox::Mode_Mngr::SINGLE_CYCLE;
     
-    mngr.Play();
-    exit(0);
+    mngr.Start();
+    
+    // 等待用户输入后再退出
+    std::cout << "Press Enter to stop playback and exit..." << std::endl;
+    std::cin.get();
+    
+    mngr.Stop();
+    return 0;
 }

@@ -1,10 +1,13 @@
 #include "mode_mngr.hpp"
 #include "playback.hpp"
 #include "wav.hpp"
+#include <thread>
 #include <string>
 #include <vector>
+#include <memory>
 #include <fstream>
 using namespace std;
+#define CXX_11
 
 namespace ox
 {
@@ -14,9 +17,9 @@ namespace ox
     Mode_Mngr::Mode_Mngr() : m_playback(Device_name, default_rate, default_channle)
     {
         // 模式设置
-        m_cur_mode  = SUSPEND;
-        m_index     = 0;
-        m_running   = false;
+        m_cur_mode = SUSPEND;
+        m_index = 0;
+        m_running = false;
         // 内部组件线程池，启动即开始就好了
 
         // 打开设备
@@ -26,7 +29,7 @@ namespace ox
 
     Mode_Mngr::~Mode_Mngr()
     {
-        m_playback.Close();
+        Stop();
     }
 
     // 播放wav格式文件
@@ -36,8 +39,8 @@ namespace ox
         ox::WAVHeader header;
         // 读取出帧头数据
         file.read((char *)&header, 44);
-        m_playback.m_channels     = header.channels;
-        m_playback.m_sample_rate  = header.sample_rate;
+        m_playback.m_channels = header.channels;
+        m_playback.m_sample_rate = header.sample_rate;
 
         // 这里根据wav头设置参数
         m_playback.SetParams();
@@ -62,9 +65,9 @@ namespace ox
             file.read(buffer, 1024);
             int len = 0;
             bool ret = m_playback.WriteFrame((const uint8_t *)buffer, 1024, &len);
-            if(!ret)
+            if (!ret)
             {
-                cerr<<"音频数据写入存在问题"<<endl;
+                cerr << "音频数据写入存在问题" << endl;
                 exit(1);
             }
             if (file.eof())
@@ -93,5 +96,35 @@ namespace ox
             }
         }
     }
+    // 启动工作函数
+    void Mode_Mngr::Start()
+    {
+        if (m_running)
+        {
+            return;
+        }
+        m_running = true;
+#ifdef CXX_14
+        // make_unique 是c++14标准
+        work_thread = std::make_unique<std::thread>([this]
+                                                    { this->Play(); });
+#endif
+#ifdef CXX_11
+        // 兼容c++11处理
+        //
+        work_thread.reset(new std::thread([this]
+                                          { this->Play(); }));
+#endif
+    }
 
+    void Mode_Mngr::Stop()
+    {
+        m_running = false;
+        m_cur_mode = SUSPEND;
+        if (work_thread && work_thread->joinable())
+        {
+            work_thread->join();
+            work_thread.reset();
+        }
+    }
 }

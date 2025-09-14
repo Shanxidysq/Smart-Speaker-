@@ -4,6 +4,7 @@
 #include <atomic>
 #include <vector>
 #include <string>
+#include <thread>
 using namespace std;
 // 模式管理类
 
@@ -27,6 +28,8 @@ namespace ox
         // 播放工作函数
         void _Play(const string& filename);
         void Play();        
+        void Start();
+        void Stop();
         vector<string>  m_lists;                  //存储音乐路径
     public:
         PLAY_MODE       m_cur_mode;               //描述当前的工作模式
@@ -35,6 +38,8 @@ namespace ox
         int             m_index;                  //vector的遍历下标
         // 内聚一个play对象 这样就可以避免设备重复打开
         AlsaPlayback    m_playback;
+        // 独占性指针持有工作线程
+        std::unique_ptr<thread>   work_thread;
 
 
     
