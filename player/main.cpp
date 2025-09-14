@@ -15,10 +15,15 @@ using namespace std;
 // 后续需要增加socket通信类
 // 增加socket之后就需要epoll监听网络套接字的状态
 // 可以说mngr是两个线程 一个socket线程还是使用epoll来监听 这里使用epoll好一点吧
-
-string name2("../music/jiaohuanyusheng.wav");
+// 这里写死作为刚刚开始测试逻辑使用
 string name1("../music/daoxiang.wav");
-
+string name2("../music/jiaohuanyusheng.wav");
+string name3("../music/10s.wav");
+string name4("../music/woshirucixiangxin.wav");
+string name5("../music/huahai.wav");
+string name6("../music/qinghuaci.wav");
+string name7("../music/qingtian.wav");
+string name8("../music/gaibaoqiqiu.wav");
 // main作为主程序接口 调用其它组件即可
 // 这里实现了播放逻辑
 
@@ -37,8 +42,16 @@ int main(int argc, char *argv[])
 
     mngr.m_lists.push_back(name2);
     mngr.m_lists.push_back(name1);
+    mngr.m_lists.push_back(name3);
+    mngr.m_lists.push_back(name4);
+    mngr.m_lists.push_back(name5);
+    mngr.m_lists.push_back(name6);
+    mngr.m_lists.push_back(name7);
+    mngr.m_lists.push_back(name8);
+
+
     mngr.m_cur_mode = ox::Mode_Mngr::SINGLE_CYCLE;
-    mngr.m_status   = ox::Mode_Mngr::SINGLE_CYCLE;
+    mngr.m_status = ox::Mode_Mngr::SINGLE_CYCLE;
 
     mngr.Start();
 
@@ -65,7 +78,7 @@ int main(int argc, char *argv[])
             mngr.m_cur_mode = ox::Mode_Mngr::LIST_LOOP;
             break;
         }
-        if(mngr.m_cur_mode == ox::Mode_Mngr::EXIT)
+        if (options == 4)
         {
             break;
         }
