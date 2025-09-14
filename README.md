@@ -106,3 +106,6 @@ scp local_file.txt username@remote_host:/remote/directory/
 scp led username@ip:/root/work
 ```
 
+## 9.14Log
+
+截至目前板级程序的播放设计逻辑完成，实现了播放的基本逻辑，采用ALSA框架驱动实现音频播放，采用多线程程序设计避免不必要的其它操作，后续就是基于网络编程模型下制定交互协议和其它操作逻辑
