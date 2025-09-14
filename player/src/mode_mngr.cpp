@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include <fstream>
+#include <random>
 using namespace std;
 #define CXX_11
 
@@ -18,6 +19,7 @@ namespace ox
     {
         // 模式设置
         m_cur_mode = SUSPEND;
+        m_status = SUSPEND;
         m_index = 0;
         m_running = false;
         // 内部组件线程池，启动即开始就好了
@@ -57,7 +59,7 @@ namespace ox
         {
             // 播放的时候检测curmode
             // 确保外部设置暂停后可以立即响应
-            if (mngr.m_cur_mode == ox::Mode_Mngr::SUSPEND)
+            if (m_cur_mode != m_status)
             {
                 break;
             }
@@ -85,13 +87,36 @@ namespace ox
         while (m_running)
         {
             // 暂停播放
+            // 播放状态发生变换需要立即响应 增加一个标志保存为保存上一次切换后的状态
             if (m_cur_mode != SUSPEND)
             {
                 // 这里会确保一首音乐播放完毕
                 _Play(m_lists[m_index]);
-                // 根据cur_mode决定index怎么遍历
-                m_index = ++m_index % m_lists.size();
-                // 播放完毕一首音乐设备需要重新Prepare
+                // 状态改变需要切换index寻址方式
+                if (m_cur_mode == EXIT)
+                {
+                    m_status = m_cur_mode;
+                    m_index = 0;
+                    break;
+                }
+                if (m_cur_mode == LIST_LOOP)
+                {
+                    m_status = m_cur_mode;
+                    m_index = ++m_index % m_lists.size();
+                }
+                if (m_cur_mode == SINGLE_CYCLE)
+                {
+                    m_status = m_cur_mode;
+                }
+                if (m_cur_mode == SHUFFLE_MODE)
+                {
+                    m_status = m_cur_mode;
+                    std::random_device rd;                   // 1. 真随机种子
+                    std::mt19937 gen(rd());                  // 2. 32 位梅森旋转算法
+                    std::uniform_int_distribution<int> dist; // 3. 闭区间 [10,99]
+
+                    m_index = dist(gen) % (m_lists.size());
+                }
                 m_playback.Drain();
             }
         }
