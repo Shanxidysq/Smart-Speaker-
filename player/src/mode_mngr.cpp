@@ -117,6 +117,16 @@ namespace ox
 
                     m_index = dist(gen) % (m_lists.size());
                 }
+                if (m_cur_mode == PRE)
+                {
+                    m_status = m_cur_mode;
+                    m_index = --m_index % m_lists.size();
+                }
+                if (m_cur_mode == NEXT)
+                {
+                    m_status = m_cur_mode;
+                    m_index = ++m_index % m_lists.size();
+                }
                 m_playback.Drain();
             }
         }

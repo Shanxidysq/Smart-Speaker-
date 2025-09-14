@@ -33,7 +33,9 @@ void menu()
     cout << "1.SINGLE_CYCLE" << endl;
     cout << "2.SHUFFLE_MODE" << endl;
     cout << "3.LIST_LOOP" << endl;
-    cout << "4.break" << endl;
+    cout << "4.PRE" << endl;
+    cout << "5.NEXT" << endl;
+    cout << "9.break" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -48,7 +50,6 @@ int main(int argc, char *argv[])
     mngr.m_lists.push_back(name6);
     mngr.m_lists.push_back(name7);
     mngr.m_lists.push_back(name8);
-
 
     mngr.m_cur_mode = ox::Mode_Mngr::SINGLE_CYCLE;
     mngr.m_status = ox::Mode_Mngr::SINGLE_CYCLE;
@@ -77,8 +78,16 @@ int main(int argc, char *argv[])
         case 3:
             mngr.m_cur_mode = ox::Mode_Mngr::LIST_LOOP;
             break;
+        case 4:
+            mngr.m_cur_mode = ox::Mode_Mngr::PRE;
+            mngr.m_status = ox::Mode_Mngr::STANDBY;
+            break;
+        case 5:
+            mngr.m_cur_mode = ox::Mode_Mngr::NEXT;
+            mngr.m_status = ox::Mode_Mngr::STANDBY;
+            break;
         }
-        if (options == 4)
+        if (options == 9)
         {
             break;
         }

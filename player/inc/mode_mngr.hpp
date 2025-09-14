@@ -21,6 +21,8 @@ namespace ox
             SHUFFLE_MODE    = 0xa2,             //随机播放
             LIST_LOOP       = 0xa3,             //列表循环
             EXIT            = 0xa4,             //退出
+            PRE             = 0xa5,             //上一首
+            NEXT            = 0xa6,             //下一首
         } PLAY_MODE;
 
         Mode_Mngr();
