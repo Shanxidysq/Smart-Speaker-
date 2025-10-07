@@ -10,6 +10,8 @@
 using namespace std;
 #define CXX_11
 
+// 增加epoll和线程池处理并发
+
 namespace ox
 {
     const string Device_name("hw:0,0");
