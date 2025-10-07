@@ -86,5 +86,9 @@ int main(int argc, char *argv[])
     mngr.m_threadpools->add([&mngr](){
         func(mngr);
     });
+
+    // 主线程阻塞
+    // 主线程阻塞，避免过早结束
+    while(1){};
     return 0;
 }

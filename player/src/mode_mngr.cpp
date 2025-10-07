@@ -42,6 +42,7 @@ namespace ox
     void Mode_Mngr::_Play(const string &filename)
     {
         ifstream file(filename.c_str(), ios::binary);
+        cout<<"当前播放"<<filename<<endl;
         ox::WAVHeader header;
         // 读取出帧头数据
         file.read((char *)&header, 44);
