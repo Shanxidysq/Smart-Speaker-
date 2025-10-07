@@ -1,6 +1,7 @@
 #ifndef _MODE_MNGR_HPP_
 #define _MODE_MNGR_HPP_
 #include "playback.hpp"
+#include "thread_pool.hpp"
 #include <atomic>
 #include <vector>
 #include <string>
@@ -43,11 +44,8 @@ namespace ox
         int             m_index;                  //vector的遍历下标
         // 内聚一个play对象 这样就可以避免设备重复打开
         AlsaPlayback    m_playback;
-        // 独占性指针持有工作线程
-        std::unique_ptr<thread>   work_thread;
-
-
-    
+        // 采用线程池来处理并发场景
+        std::unique_ptr<ThreadPool>      m_threadpools;              // 增加线程池组件  
     };
 }
 extern ox::Mode_Mngr mngr;

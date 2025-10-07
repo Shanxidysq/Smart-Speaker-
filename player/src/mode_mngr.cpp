@@ -17,14 +17,16 @@ namespace ox
     const string Device_name("hw:0,0");
     const int default_rate = 44100;
     const int default_channle = 2;
-    Mode_Mngr::Mode_Mngr() : m_playback(Device_name, default_rate, default_channle)
+
+    // 增加线程池组件处理多任务场景
+    Mode_Mngr::Mode_Mngr() : m_playback(Device_name, default_rate, default_channle),
+                            m_threadpools(new ThreadPool(10))
     {
         // 模式设置
         m_cur_mode = SUSPEND;
         m_status = SUSPEND;
         m_index = 0;
         m_running = false;
-        // 内部组件线程池，启动即开始就好了
 
         // 打开设备
         m_playback.Open();
@@ -149,8 +151,9 @@ namespace ox
 #ifdef CXX_11
         // 兼容c++11处理
         //
-        work_thread.reset(new std::thread([this]
-                                          { this->Play(); }));
+        // work_thread.reset(new std::thread([this]{ this->Play(); }));
+        m_threadpools->add([this]
+                            {this->Play();});
 #endif
     }
 
@@ -158,10 +161,7 @@ namespace ox
     {
         m_running = false;
         m_cur_mode = SUSPEND;
-        if (work_thread && work_thread->joinable())
-        {
-            work_thread->join();
-            work_thread.reset();
-        }
+        // 停止线程池
+        m_threadpools->stop();
     }
 }
