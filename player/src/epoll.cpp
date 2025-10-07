@@ -1,7 +1,7 @@
 #include "epoll.hpp"
 #include "mode_mngr.hpp"
 #include <cctype>
-
+#include <string>
 namespace ox
 {
 
@@ -118,6 +118,43 @@ namespace ox
         connections[client_fd] = std::move(con);
     }
 
+    static void parser(const string &status)
+    {
+        cout<<"parser: "<<status<<endl;
+        cout<<"bytes : "<<status.size()<<endl;
+        if(status == "suspend" || status == "SUSPEND")
+        {
+            mngr.m_cur_mode = ox::Mode_Mngr::SUSPEND;
+            return;
+        }
+        if(status == "single_cycle" || status == "SINGLE_CYCLE")
+        {
+            mngr.m_cur_mode = ox::Mode_Mngr::SINGLE_CYCLE;
+            return;
+        }
+        if(status == "shuffle_mode" || status == "SHUFFLE_MODE")
+        {
+            mngr.m_cur_mode = ox::Mode_Mngr::SHUFFLE_MODE;
+            return;
+        }
+        if(status == "list_loop" || status == "LIST_LOOP")
+        {
+            mngr.m_cur_mode = ox::Mode_Mngr::LIST_LOOP;
+            return;
+        }
+        if(status == "pre" || status == "PRE")
+        {
+            mngr.m_cur_mode = ox::Mode_Mngr::PRE;
+            mngr.m_status = ox::Mode_Mngr::STANDBY;
+            return;
+        }
+        if(status == "next" || status == "NEXT")
+        {
+            mngr.m_cur_mode = ox::Mode_Mngr::NEXT;
+            mngr.m_status = ox::Mode_Mngr::STANDBY;
+            return;
+        }
+    }
     // 读事件处理
     void EpollServer::handle_read(Connect *con)
     {
@@ -127,8 +164,11 @@ namespace ox
                                  Connect::read_size - con->read_len);
             // 接收到数据之后处理处理，解析
 
+            // count > 0 接收有效个数据字节，然后进行数据解析操作
             if (count > 0)
             {
+                std::string recv;
+                // 回复客户端
                 con->read_len += count;
 
                 // 查找是否收到完整的一行（以换行符结尾）
@@ -141,6 +181,7 @@ namespace ox
                         for (int j = 0; j < line_length - 1; ++j)
                         {
                             con->write_buffer[j] = std::toupper(con->read_buffer[j]);
+                            recv += con->read_buffer[j];
                         }
                         con->write_buffer[line_length - 1] = '\n';
                         con->write_len = line_length;
@@ -154,7 +195,11 @@ namespace ox
                         handle_write(con);
                         break;
                     }
+                    cout<<con->read_buffer[i];
                 }
+                cout<<"recv :"<<recv<<endl;
+                parser(recv);
+                cout<<endl;
             }
             else if (count == 0)
             {
@@ -393,20 +438,20 @@ namespace ox
 
                 if (event_mask & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
                 {
-                    mngr.m_threadpools->add([this,&conn]
+                    mngr.m_threadpools->add([this, &conn]
                                             { this->handle_error(conn); });
                     continue;
                 }
 
                 if (event_mask & EPOLLIN)
                 {
-                    mngr.m_threadpools->add([this,&conn]
+                    mngr.m_threadpools->add([this, &conn]
                                             { this->handle_read(conn); });
                 }
 
                 if (event_mask & EPOLLOUT)
                 {
-                    mngr.m_threadpools->add([this,&conn]
+                    mngr.m_threadpools->add([this, &conn]
                                             { this->handle_write(conn); });
                 }
             }
