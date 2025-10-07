@@ -1,4 +1,5 @@
 #include "epoll.hpp"
+#include "mode_mngr.hpp"
 #include <cctype>
 
 namespace ox
@@ -87,6 +88,7 @@ namespace ox
         return true;
     }
 
+    // 连接处理
     void EpollServer::handle_accept()
     {
         struct sockaddr_in client_addr;
@@ -116,12 +118,14 @@ namespace ox
         connections[client_fd] = std::move(con);
     }
 
+    // 读事件处理
     void EpollServer::handle_read(Connect *con)
     {
         while (true)
         {
             ssize_t count = read(con->fd, con->read_buffer + con->read_len,
                                  Connect::read_size - con->read_len);
+            // 接收到数据之后处理处理，解析
 
             if (count > 0)
             {
@@ -175,6 +179,7 @@ namespace ox
         }
     }
 
+    // 处理写
     void EpollServer::handle_write(Connect *con)
     {
         if (con->write_len <= 0)
@@ -377,7 +382,10 @@ namespace ox
                 // 检查是否是服务器socket
                 if (conn->fd == server_fd)
                 {
-                    handle_accept();
+                    // 移交线程池处理
+                    mngr.m_threadpools->add([this]
+                                            { this->handle_accept(); });
+
                     continue;
                 }
 
@@ -385,18 +393,21 @@ namespace ox
 
                 if (event_mask & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
                 {
-                    handle_error(conn);
+                    mngr.m_threadpools->add([this,&conn]
+                                            { this->handle_error(conn); });
                     continue;
                 }
 
                 if (event_mask & EPOLLIN)
                 {
-                    handle_read(conn);
+                    mngr.m_threadpools->add([this,&conn]
+                                            { this->handle_read(conn); });
                 }
 
                 if (event_mask & EPOLLOUT)
                 {
-                    handle_write(conn);
+                    mngr.m_threadpools->add([this,&conn]
+                                            { this->handle_write(conn); });
                 }
             }
         }

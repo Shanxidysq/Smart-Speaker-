@@ -17,6 +17,7 @@
 
 namespace ox
 {
+    // 连接类
     class Connect
     {
     public:
@@ -25,6 +26,7 @@ namespace ox
 
     public:
         int fd;
+        // 非阻塞套接字的读写缓冲区
         char read_buffer[read_size];
         char write_buffer[write_size];
         int read_len;
@@ -43,10 +45,13 @@ namespace ox
         Connect &operator=(Connect &&other) noexcept;
     };
 
+    // epoll 服务器
     class EpollServer
     {
     private:
+        // server_fd 监听套接字
         int server_fd;
+        // epoll_fd 描述epoll的内核事件表的描述符
         int epoll_fd;
         bool running;
         std::unordered_map<int, std::unique_ptr<Connect>> connections;

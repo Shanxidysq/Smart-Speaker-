@@ -1,12 +1,16 @@
 #include "playback.hpp"
 #include "wav.hpp"
 #include "mode_mngr.hpp"
+#include "epoll.hpp"
 #include <iostream>
 #include <thread>
 #include <fstream>
 #include <functional>
 #include <alsa/asoundlib.h>
 using namespace std;
+
+ox::Mode_Mngr mngr;
+
 
 string name1("../music/daoxiang.wav");
 string name2("../music/jiaohuanyusheng.wav");
@@ -68,7 +72,6 @@ void func(ox::Mode_Mngr &mngr)
 
 int main(int argc, char *argv[])
 {
-    ox::Mode_Mngr mngr;
 
     mngr.m_lists.push_back(name2);
     mngr.m_lists.push_back(name1);
@@ -83,12 +86,19 @@ int main(int argc, char *argv[])
     mngr.m_status = ox::Mode_Mngr::SINGLE_CYCLE;
 
     mngr.Start();
-    mngr.m_threadpools->add([&mngr](){
-        func(mngr);
-    });
+    mngr.m_threadpools->add([]()
+                            { func(mngr); });
 
-    // 主线程阻塞
-    // 主线程阻塞，避免过早结束
-    while(1){};
+    // 启动epoll-server
+    ox::EpollServer server;
+    if (!server.start(9898))
+    {
+        std::cerr << "Failed to start server" << std::endl;
+        return 1;
+    }
+
+    std::cout << "Epoll server running on port 9898. Press Ctrl+C to stop." << std::endl;
+    server.run();
+
     return 0;
 }
